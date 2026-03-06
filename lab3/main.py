@@ -1,7 +1,7 @@
 from google import genai
 
 # 1. Налаштування клієнта (вставте сюди свій ключ)
-API_KEY = 'AIzaSyAVgg2MmopjSQ3ggX0dCHDTwfDuqXRawV4'
+API_KEY = ''
 client = genai.Client(api_key=API_KEY)
 
 # 2. Створення сесії чату з актуальною моделлю
