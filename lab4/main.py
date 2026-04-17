@@ -1,47 +1,70 @@
 import streamlit as st
 from gtts import gTTS
 import os
+import uuid
 
-# Налаштування сторінки
-st.set_page_config(page_title="TTS Додаток", page_icon="🎙️")
+# ===== НАЛАШТУВАННЯ СТОРІНКИ =====
+st.set_page_config(
+    page_title="Speech Generator",
+    page_icon="🎤",
+    layout="centered"
+)
 
-st.title("🎙️ Генератор мовлення (Лабораторна №4)")
-st.write("Введіть текст нижче, щоб перетворити його на аудіо.")
+st.header("🎤 Text → Speech (Lab 4)")
+st.caption("Введіть текст і отримайте озвучку")
 
-# Форма для введення тексту
-text_input = st.text_area("Ваш текст:", placeholder="Привіт! Як справи?", height=150)
+# ===== ВВІД КОРИСТУВАЧА =====
+user_text = st.text_area(
+    label="Текст для озвучення:",
+    placeholder="Наприклад: Привіт, як справи?",
+    height=140
+)
 
-# Вибір мови
-lang = st.selectbox("Оберіть мову:", [
-    ("Українська", "uk"),
-    ("English", "en"),
-    ("Deutsch", "de")
-], format_func=lambda x: x[0])
+# ===== ВИБІР МОВИ =====
+language_options = {
+    "Українська": "uk",
+    "English": "en",
+    "Deutsch": "de"
+}
 
-if st.button("Згенерувати мовлення"):
-    if text_input.strip():
+selected_lang_name = st.selectbox("Мова:", list(language_options.keys()))
+selected_lang_code = language_options[selected_lang_name]
+
+# ===== ОСНОВНА ЛОГІКА =====
+def generate_audio(text, lang_code):
+    unique_name = f"audio_{uuid.uuid4().hex}.mp3"
+
+    tts = gTTS(text=text, lang=lang_code)
+    tts.save(unique_name)
+
+    return unique_name
+
+
+# ===== КНОПКА =====
+if st.button("▶️ Озвучити текст"):
+    if not user_text.strip():
+        st.warning("⚠️ Введіть текст перед генерацією")
+    else:
         try:
-            with st.spinner('Генеруємо аудіо...'):
-                # Використання gTTS API
-                tts = gTTS(text=text_input, lang=lang[1])
-                filename = "speech.mp3"
-                tts.save(filename)
+            with st.spinner("⏳ Обробка..."):
+                audio_file = generate_audio(user_text, selected_lang_code)
 
-                # Відтворення в браузері
-                st.audio(filename, format="audio/mp3")
+                st.success("✅ Готово!")
 
-                # Кнопка для завантаження файлу
-                with open(filename, "rb") as file:
+                # Відтворення
+                st.audio(audio_file)
+
+                # Завантаження
+                with open(audio_file, "rb") as f:
                     st.download_button(
-                        label="📥 Завантажити MP3",
-                        data=file,
-                        file_name="speech.mp3",
+                        label="⬇️ Завантажити",
+                        data=f,
+                        file_name="result.mp3",
                         mime="audio/mp3"
                     )
 
-                # Очищення тимчасового файлу
-                os.remove(filename)
-        except Exception as e:
-            st.error(f"❌ Сталася помилка: {e}")
-    else:
-        st.warning("⚠️ Будь ласка, введіть текст.")
+                # Видалення
+                os.remove(audio_file)
+
+        except Exception as error:
+            st.error(f"❌ Помилка: {error}")
